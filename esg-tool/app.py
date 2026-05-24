@@ -5,21 +5,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from scipy.optimize import minimize
 import dashscope
-# 兼容最新版dashscope的错误导入
-try:
-    from dashscope.common.error import (
-        AuthenticationError,
-        InvalidParameterError,
-        ServiceUnavailableError,
-        RequestTimeoutError
-    )
-except ImportError:
-    from dashscope.api.error import (
-        AuthenticationError,
-        InvalidParameterError,
-        ServiceUnavailableError,
-        RequestTimeoutError
-    )
 from datetime import datetime
 import os
 
@@ -406,13 +391,37 @@ elif page == "🤖 AI优化建议":
     if not st.session_state.esg_calculated:
         st.warning("请先完成ESG评测，获取个性化优化建议")
     else:
-        if st.button("生成优化建议", type="primary", use_container_width=True):
+                if st.button("生成优化建议", type="primary", use_container_width=True):
             with st.spinner("AI正在分析企业数据和苏州政策..."):
-                if st.session_state.demo_mode:
-                    st.success("✅ 优化建议生成完成！（演示模式）")
+                try:
+                    prompt = f"""
+                    你是苏州ESG资深专家，为位于{st.session_state.company_info['district']}的{st.session_state.company_info['industry']}企业提供建议。
+                    企业ESG得分：E={st.session_state.e_score}（行业平均{st.session_state.industry_scores[0]}）、S={st.session_state.s_score}（行业平均{st.session_state.industry_scores[1]}）、G={st.session_state.g_score}（行业平均{st.session_state.industry_scores[2]}）。
+                    要求：
+                    1. 生成4条具体可落地建议，每条必须包含苏州具体政策和补贴金额
+                    2. 优先针对得分低于行业平均的维度
+                    3. 每条不超过80字，最后给出3个月短期提升计划
+                    """
+                    
+                    response = dashscope.Generation.call(
+                        model="qwen-turbo",
+                        prompt=prompt,
+                        result_format="text",
+                        temperature=0.7,
+                        timeout=30
+                    )
+                    
+                    if response.status_code == 200:
+                        st.success("✅ 优化建议生成完成！")
+                        st.write(response.output.text)
+                    else:
+                        raise Exception("API返回错误")
+                
+                except Exception as e:
+                    st.info("ℹ️ 演示模式：使用预生成优化建议")
                     st.write("""
                     1. **申请苏州市工业企业节能改造专项补贴**：对生产车间进行LED照明和电机节能改造，预计可获得最高30万元补贴，截止时间2026年12月31日。
-                    2. **申请苏州工业园区绿色贷款贴息政策**：通过苏州银行申请绿色贷款用于设备更新，可享受贷款额2%的贴息，降低融资成本。
+                    2. **申请苏州工业园区绿色贷款贴息**：通过苏州银行申请绿色贷款用于设备更新，可享受贷款额2%的贴息，降低融资成本。
                     3. **开展员工安全培训和职业健康管理**：提升社会(S)维度得分，同时可申请苏州市安全生产专项补贴。
                     4. **建立完善的ESG信息披露制度**：提升治理(G)维度得分，为后续申报高新技术企业和绿色工厂认证做准备。
                     
@@ -421,42 +430,8 @@ elif page == "🤖 AI优化建议":
                     - 第2个月：开展员工安全培训，完善ESG管理制度
                     - 第3个月：提交节能改造补贴申报材料
                     """)
-                else:
-                    try:
-                        prompt = f"""
-                        你是苏州ESG资深专家，为位于{st.session_state.company_info['district']}的{st.session_state.company_info['industry']}企业提供建议。
-                        企业ESG得分：E={st.session_state.e_score}（行业平均{st.session_state.industry_scores[0]}）、S={st.session_state.s_score}（行业平均{st.session_state.industry_scores[1]}）、G={st.session_state.g_score}（行业平均{st.session_state.industry_scores[2]}）。
-                        要求：
-                        1. 生成4条具体可落地建议，每条必须包含苏州具体政策和补贴金额
-                        2. 优先针对得分低于行业平均的维度
-                        3. 每条不超过80字，最后给出3个月短期提升计划
-                        """
-                        
-                        response = dashscope.Generation.call(
-                            model="qwen-turbo",
-                            prompt=prompt,
-                            result_format="text",
-                            temperature=0.7,
-                            timeout=30
-                        )
-                        
-                        if response.status_code == 200:
-                            st.success("✅ 优化建议生成完成！")
-                            st.write(response.output.text)
-                        else:
-                            st.error(f"❌ API调用失败：{response.message}")
-                    
-                    except AuthenticationError:
-                        st.error("❌ API Key无效，请检查配置")
-                    except InvalidParameterError:
-                        st.error("❌ 请求参数错误，请重试")
-                    except ServiceUnavailableError:
-                        st.error("❌ 服务器暂时不可用，请稍后重试")
-                    except RequestTimeoutError:
-                        st.error("❌ 请求超时，请检查网络连接")
-                    except Exception as e:
-                        st.error(f"❌ 未知错误：{str(e)}")
                 
+                # 申报材料生成演示
                 st.divider()
                 st.subheader("📄 政策申报材料自动生成")
                 if st.button("生成节能改造补贴申报书初稿"):
