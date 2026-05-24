@@ -5,12 +5,21 @@ import plotly.express as px
 import plotly.graph_objects as go
 from scipy.optimize import minimize
 import dashscope
-from dashscope.common.error import (
-    AuthenticationError,
-    InvalidParameterError,
-    ServiceUnavailableError,
-    RequestTimeoutError
-)
+# 兼容最新版dashscope的错误导入
+try:
+    from dashscope.common.error import (
+        AuthenticationError,
+        InvalidParameterError,
+        ServiceUnavailableError,
+        RequestTimeoutError
+    )
+except ImportError:
+    from dashscope.api.error import (
+        AuthenticationError,
+        InvalidParameterError,
+        ServiceUnavailableError,
+        RequestTimeoutError
+    )
 from datetime import datetime
 import os
 
