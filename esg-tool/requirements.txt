@@ -1,3 +1,6 @@
+--index-url https://pypi.org/simple
+--no-binary :none:
+
 streamlit==1.35.0
 pandas==2.2.2
 numpy==1.26.4
