@@ -391,7 +391,7 @@ elif page == "🤖 AI优化建议":
     if not st.session_state.esg_calculated:
         st.warning("请先完成ESG评测，获取个性化优化建议")
     else:
-                if st.button("生成优化建议", type="primary", use_container_width=True):
+        if st.button("生成优化建议", type="primary", use_container_width=True):
             with st.spinner("AI正在分析企业数据和苏州政策..."):
                 try:
                     prompt = f"""
@@ -462,7 +462,6 @@ elif page == "🤖 AI优化建议":
                             file_name=f"{st.session_state.company_info['name']}_节能改造申报书.docx",
                             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                         )
-
 # --- 5. ESG投资策略回测 ---
 elif page == "📈 ESG投资策略回测":
     st.title("📈 苏州市场ESG投资策略回测系统")
