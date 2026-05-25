@@ -315,6 +315,13 @@ elif page == "📊 ESG智能评测":
         st.info(f"📈 {c_name} ESG表现**持平行业平均**，可优化短板维度")
     else:
         st.warning(f"⚠️ {c_name} ESG表现**低于行业平均**，需重点提升 {'环境E' if e_score<s_score and e_score<g_score else '社会责任S' if s_score<e_score and s_score<g_score else '治理G'} 维度")
+        # 必须把评测数据存入浏览器缓存，给政策页面调用
+st.session_state.total_score = total_score
+st.session_state.c_industry = c_industry
+st.session_state.c_district = c_district
+st.session_state.e_score = e_score
+st.session_state.s_score = s_score
+st.session_state.g_score = g_score
 # --- 3. 政策智能匹配 ---
 elif page == "📄 政策智能匹配":
     st.title("📄 苏州ESG政策智能匹配系统")
