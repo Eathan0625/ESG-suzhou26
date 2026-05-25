@@ -154,7 +154,7 @@ with st.sidebar:
     st.divider()
     st.info("""
     🏆 核心优势：
-    - 全国唯一专注苏州区县级ESG政策
+    - 专注苏州市ESG政策
     - 通义千问大模型智能生成
     - 苏州本地ESG投资策略回测验证
     """)
@@ -218,15 +218,13 @@ if page == "🏠 项目概述":
         st.write("基于苏州30家A股上市公司3年数据回测，验证高ESG企业超额收益")
 
 # --- 2. ESG智能评测 ---
-elif page == "ESG智能评测":
+elif page == "📊 ESG智能评测":
     st.title("🏭 ESG智能评测系统（苏州30家A股对标版）")
     st.write("基于国际标准+苏州本地要求，内置30家苏州A股上市公司2024年同花顺真实ESG数据，提供精准评分与行业对标")
     st.divider()
 
     # ========== 核心：30家苏州A股上市公司完整ESG数据库（2024同花顺真实公开数据） ==========
-    import pandas as pd
-    import plotly.express as px
-    import plotly.graph_objects as go
+    
 
     suzhou_30stock_esg = pd.DataFrame({
         "股票代码": ["002384","300394","600487","300308","002079","603005","688017","002156","603699","002531",
