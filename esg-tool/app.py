@@ -228,6 +228,24 @@ elif page == "📊 ESG智能评测":
     with col1:
         st.subheader("企业信息与得分输入")
         c_name = st.text_input("企业名称", value="苏州XX制造有限公司")
+        # ========== 内置苏州制造行业数据（解决下拉框为空报错） ==========
+import pandas as pd
+# 苏州主流制造行业 + ESG行业平均分
+industry_data = {"ESG平均分": [78, 75, 72, 80, 82, 76, 68, 70, 74, 79]}
+industry_list = [
+    "高端装备制造",
+    "电子信息制造",
+    "汽车零部件",
+    "纳米新材料",
+    "生物医药",
+    "新能源产业",
+    "高端纺织",
+    "精细化工",
+    "通用机械",
+    "节能环保装备"
+]
+industry_avg = pd.DataFrame(industry_data, index=industry_list)
+# ==============================================================
         c_industry = st.selectbox("所属行业", options=industry_avg.index.tolist(), index=0)
         c_district = st.selectbox("所在区县", options=["工业园区", "高新区", "吴中区", "相城区", "姑苏区", "昆山市", "张家港市", "常熟市", "太仓市", "吴江区"], index=0)
         
