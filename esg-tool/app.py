@@ -222,10 +222,8 @@ elif page == "📊 ESG智能评测":
     st.title("🏭 ESG智能评测系统（苏州30家A股对标版）")
     st.write("基于国际标准+苏州本地要求，内置30家苏州A股上市公司2024年同花顺真实ESG数据，提供精准评分与行业对标")
     st.divider()
-
     # ========== 核心：30家苏州A股上市公司完整ESG数据库（2024同花顺真实公开数据） ==========
     
-
     suzhou_30stock_esg = pd.DataFrame({
         "股票代码": ["002384","300394","600487","300308","002079","603005","688017","002156","603699","002531",
                     "300751","688390","603212","688166","603626","300806","002409","600527","002255","300128",
@@ -241,16 +239,16 @@ elif page == "📊 ESG智能评测":
         "治理G得分": [77.3,80.5,78.4,79.2,73.6,76.8,78.3,75.4,74.2,77.3,77.4,79.5,74.6,80.4,73.5,75.5,76.2,71.4,72.5,70.4,74.3,72.4,69.2,73.1,76.4,73.3,70.4,72.2,68.3,71.1],
         "ESG综合总分": [74.2,78.6,77.9,77.2,70.8,77.2,77.4,74.4,73.4,77.8,77.5,80.0,74.7,80.4,71.8,75.4,75.5,69.6,70.9,68.8,73.6,71.4,67.9,73.0,75.7,72.4,69.0,70.9,66.9,69.9]
     })
-
     # 8大行业平均数据（自动从真实数据计算，无需手动修改）
     suzhou_industry_avg = suzhou_30stock_esg.groupby("所属行业")[["环境E得分","社会责任S得分","治理G得分","ESG综合总分"]].mean().round(1).reset_index()
-
     col1, col2 = st.columns(2)
-
     # ========== 左侧：企业信息+ESG打分+对标选择 ==========
     with col1:
         st.subheader("📝 企业信息与得分输入")
         select_mode = st.radio("评测模式", ["自定义企业评测","对标30家上市企业"])
+        # ✅ 修复：定义缺失的区县变量
+        c_district = st.selectbox("所在区县", ["全市", "工业园区", "昆山市", "吴中区", "高新区", "姑苏区", "相城区", "吴江区", "常熟市", "张家港市", "太仓市"])
+        
         if select_mode == "对标30家上市企业":
             stock_name = st.selectbox("选择苏州A股上市公司", suzhou_30stock_esg["公司名称"].tolist())
             stock_data = suzhou_30stock_esg[suzhou_30stock_esg["公司名称"] == stock_name].iloc[0]
@@ -272,16 +270,13 @@ elif page == "📊 ESG智能评测":
         
         st.divider()
         st.metric("企业综合ESG总分", value=f"{total_score} 分")
-
     # ========== 右侧：行业对标+可视化雷达图 ==========
     with col2:
         st.subheader("📊 行业对标分析")
         industry_avg = suzhou_industry_avg[suzhou_industry_avg["所属行业"] == c_industry]["ESG综合总分"].values[0]
         diff = total_score - industry_avg
-
         st.metric(f"【{c_industry}】行业平均分", value=f"{industry_avg} 分", delta=f"{diff:.1f} 分")
         st.metric("30家苏州企业整体平均分", value=f"{suzhou_30stock_esg['ESG综合总分'].mean().round(1)} 分")
-
         # 雷达图：企业VS行业平均
         radar_fig = go.Figure()
         radar_fig.add_trace(go.Scatterpolar(
@@ -302,12 +297,10 @@ elif page == "📊 ESG智能评测":
         ))
         radar_fig.update_layout(polar=dict(radialaxis=dict(range=[0, 100])), height=350)
         st.plotly_chart(radar_fig, use_container_width=True)
-
     # ========== 底部：30家完整数据表格+智能评价 ==========
     st.divider()
     st.subheader("📋 苏州30家A股上市公司完整ESG数据库")
     st.dataframe(suzhou_30stock_esg, use_container_width=True, hide_index=True)
-
     st.divider()
     if total_score >= industry_avg + 5:
         st.success(f"✅ {c_name} ESG表现**大幅优于行业平均**，核心优势：{'环境E' if e_score>=s_score and e_score>=g_score else '社会责任S' if s_score>=e_score and s_score>=g_score else '治理G'}")
@@ -315,13 +308,27 @@ elif page == "📊 ESG智能评测":
         st.info(f"📈 {c_name} ESG表现**持平行业平均**，可优化短板维度")
     else:
         st.warning(f"⚠️ {c_name} ESG表现**低于行业平均**，需重点提升 {'环境E' if e_score<s_score and e_score<g_score else '社会责任S' if s_score<e_score and s_score<g_score else '治理G'} 维度")
-        # 必须把评测数据存入浏览器缓存，给政策页面调用
-st.session_state.total_score = total_score
-st.session_state.c_industry = c_industry
-st.session_state.c_district = c_district
-st.session_state.e_score = e_score
-st.session_state.s_score = s_score
-st.session_state.g_score = g_score
+
+    # ✅ 修复1：缩进进模块内部
+    # ✅ 修复2：补全 c_district
+    # ✅ 修复3：初始化 company_info
+    st.session_state.total_score = total_score
+    st.session_state.c_industry = c_industry
+    st.session_state.c_district = c_district
+    st.session_state.e_score = e_score
+    st.session_state.s_score = s_score
+    st.session_state.g_score = g_score
+    st.session_state.company_info = {
+        "name": c_name,
+        "industry": c_industry,
+        "district": c_district
+    }
+    st.session_state.esg_calculated = True
+    st.session_state.industry_scores = [
+        suzhou_industry_avg[suzhou_industry_avg["所属行业"] == c_industry]["环境E得分"].values[0],
+        suzhou_industry_avg[suzhou_industry_avg["所属行业"] == c_industry]["社会责任S得分"].values[0],
+        suzhou_industry_avg[suzhou_industry_avg["所属行业"] == c_industry]["治理G得分"].values[0]
+    ]
 # --- 3. 政策智能匹配 ---
 elif page == "📄 政策智能匹配":
     st.title("📄 苏州ESG政策智能匹配系统")
