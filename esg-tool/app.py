@@ -16,6 +16,81 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# --------------------------
+# 修复1：全局初始化所有session_state
+# --------------------------
+if "page" not in st.session_state:
+    st.session_state.page = "🏠 首页"
+if "company_info" not in st.session_state:
+    st.session_state.company_info = {
+        "name": "",
+        "industry": "",
+        "district": "",
+        "scale": "",
+        "esg_score": 0.0
+    }
+if "esg_result" not in st.session_state:
+    st.session_state.esg_result = None
+if "matched_policies" not in st.session_state:
+    st.session_state.matched_policies = []
+
+# --------------------------
+# 修复2：新增缺失的政策匹配函数
+# --------------------------
+def ai_policy_match(company_info, policy_data):
+    matched = []
+    for _, policy in policy_data.iterrows():
+        score = 0
+        reasons = []
+        if company_info["industry"] in policy["适用行业"]:
+            score += 40
+            reasons.append(f"行业匹配：{company_info['industry']}")
+        if company_info["district"] in policy["适用地区"] or "全市" in policy["适用地区"]:
+            score += 20
+            reasons.append(f"地区匹配：{company_info['district']}")
+        if company_info["scale"] in policy["适用规模"] or "不限" in policy["适用规模"]:
+            score += 20
+            reasons.append(f"规模匹配：{company_info['scale']}")
+        if company_info["esg_score"] >= policy["最低ESG要求"]:
+            score += 20
+            reasons.append(f"ESG达标：得分{company_info['esg_score']:.1f} ≥ {policy['最低ESG要求']}")
+        if score >= 40:
+            matched.append({
+                "政策名称": policy["政策名称"],
+                "发布部门": policy["发布部门"],
+                "补贴金额": policy["补贴金额"],
+                "匹配度": f"{score}%",
+                "匹配原因": "；".join(reasons),
+                "申报截止日期": policy["申报截止日期"]
+            })
+    matched.sort(key=lambda x: int(x["匹配度"].replace("%", "")), reverse=True)
+    return pd.DataFrame(matched)
+
+# --------------------------
+# 修复3：定义缺失的政策数据库policy_data
+# --------------------------
+policy_data = pd.DataFrame([
+    {
+        "政策名称": "苏州市绿色企业认定及奖励办法",
+        "发布部门": "苏州市金融办",
+        "适用行业": ["电子信息制造", "新能源", "高端装备"],
+        "适用地区": ["全市"],
+        "适用规模": ["不限"],
+        "最低ESG要求": 60,
+        "补贴金额": "最高50万元",
+        "申报截止日期": "2025-12-31"
+    },
+    {
+        "政策名称": "苏州市制造业数字化转型补贴",
+        "发布部门": "苏州市工信局",
+        "适用行业": ["电子信息制造", "汽车制造", "机械制造"],
+        "适用地区": ["吴中区", "相城区", "姑苏区", "工业园区", "高新区"],
+        "适用规模": ["中型", "大型"],
+        "最低ESG要求": 50,
+        "补贴金额": "项目投资额的15%，最高200万元",
+        "申报截止日期": "2025-09-30"
+    }
+])
 # --- 🔒 API Key安全配置（无硬编码，比赛演示专用） ---
 try:
     dashscope.api_key = st.secrets["DASHSCOPE_API_KEY"]
